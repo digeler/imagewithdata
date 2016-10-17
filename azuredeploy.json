@@ -1,0 +1,190 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "imagedinor",
+      "metadata": {
+        "description": "This is the name of your virtual machine"
+      }
+    },
+    "osDiskUrlParam": {
+      "type": "string",
+      "defaultValue": "https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/myimage-osDisk.6da32f74-0e68-444f-aa3a-9d16b5d2c791.vhd",
+      "metadata": {
+        "description": "URL to os Image in system"
+      }
+    },
+    "dataDiskUrlParam": {
+      "type": "string",
+      "defaultValue": "https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/system/Microsoft.Compute/Images/vhds/myimage-dataDisk-0.6da32f74-0e68-444f-aa3a-9d16b5d2c791.vhd",
+      "metadata": {
+        "description": "URL to data disk image in system"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "dinfimage",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "defaultValue": "dinor",
+      "metadata": {
+        "description": "User Name for the Virtual Machine"
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "defaultValue": "dinor",
+      "metadata": {
+        "description": "Public ip address name "
+      }
+    },
+    "osDiskVhdName": {
+      "type": "string",
+      "defaultValue": "https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/vhds/osdisk.vhd",
+      "metadata": {
+        "description": "this is the location where you want the os disk to be created E.G https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/vhds/osdisk.vhd "
+      }
+    },
+    "dataDiskVhdName": {
+      "type": "string",
+      "defaultValue": "https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/vhds/data.vhd",
+      "metadata": {
+        "description": "this is the location where you want the DATA disk to be created E.G https://vhdsnkdsa8dv4ef0bnpd1kvr.blob.core.windows.net/vhds/osdisk.vhd "
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Corp123!!!!!",
+      "metadata": {
+        "description": "Password for the Virtual Machine"
+      }
+    },
+
+    "osType": {
+      "type": "string",
+      "defaultValue": "linux",
+      "allowedValues": [
+        "windows",
+        "linux"
+      ],
+      "metadata": {
+        "description": "This is the OS that your VM will be running"
+      }
+    },
+    "nicname": {
+      "type": "string",
+      "defaultValue": "dindocker-nic",
+
+      "metadata": {
+        "description": "This is the name of exisiting nic"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "allowedValues": [
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "This is the size of your VM"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-05-01-preview",
+    "publicIPAddressName": "[parameters('publicIPAddressName')]",
+    "vmName": "[parameters('vmName')]",
+    "nicName": "[parameters('nicname')]",
+
+    "publicIPAddressType": "Dynamic",
+    "osDiskUrl": "[parameters('osDiskUrlParam')]",
+    "dataDiskUrl": "[parameters('dataDiskUrlParam')]",
+    "osDiskVhdName": "[parameters('osDiskVhdName')]",
+    "dataDiskVhdName": "[parameters('dataDiskVhdName')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "dataDisks": [
+            {
+              "name": "[concat(variables('vmName'),'-dataDisk')]",
+              "lun": 0,
+              "createOption": "FromImage",
+              "image": {
+                "uri": "[variables('dataDiskUrl')]"
+              },
+              "vhd": {
+                "uri": "[variables('dataDiskVhdName')]"
+              }
+            }
+          ],
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'-osDisk')]",
+            "osType": "[parameters('osType')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "[variables('osDiskUrl')]"
+            },
+            "vhd": {
+              "uri": "[variables('osDiskVhdName')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
